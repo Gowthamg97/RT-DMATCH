@@ -1,0 +1,38 @@
+import re
+import spacy
+
+# Load spaCy English model
+nlp = spacy.load("en_core_web_sm")
+
+# Pre-compiled regexes for performance
+EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
+ZIP_REGEX = re.compile(r"^\d{5}(-\d{4})?$")
+PHONE_REGEX = re.compile(r"^\+?\d{10,15}$")
+DATE_REGEX = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+def detect_annotation(field):
+    name = field["name"].lower()
+    example = field.get("example", "")
+    text = f"{name} {example}"
+
+    doc = nlp(text)
+
+    if "email" in name or EMAIL_REGEX.search(example):
+        return "@ValidEmail"
+    elif "zip" in name or ZIP_REGEX.match(example):
+        return "@ZipCode"
+    elif "phone" in name or PHONE_REGEX.match(example):
+        return "@PhoneNumber"
+    elif "date" in name or DATE_REGEX.match(example):
+        return "@Date"
+    else:
+        return "@GenericString"
+
+# Example usage
+field = {
+    "name": "user_email",
+    "type": "string",
+    "example": "hello@ai.com"
+}
+
+print(detect_annotation(field))  # → @ValidEmail
